@@ -20,10 +20,12 @@ import {
 } from "@chakra-ui/react"
 import useCreateProduct from "@/hooks/useCreateProduct"
 import { useFormik } from "formik"
+import useDeleteProduct from "@/hooks/useDeleteProduct"
 
 const HomePage = () => {
-  const { products, productIsLoading } = useFetchProduct()
-  const { createProductIsLoading, mutate } = useCreateProduct()
+  const { products, productIsLoading, refetchProducts } = useFetchProduct()
+  const { createProductIsLoading, mutateCreateProduct } = useCreateProduct()
+  const { mutateDeleteProduct } = useDeleteProduct()
 
   const toast = useToast()
 
@@ -37,7 +39,7 @@ const HomePage = () => {
     onSubmit: () => {
       //melakukan post product
       const { name, price, description, image } = formik.values
-      mutate({
+      mutateCreateProduct({
         name,
         price: parseInt(price),
         description,
@@ -50,7 +52,7 @@ const HomePage = () => {
       formik.setFieldValue("description", "")
       formik.setFieldValue("image", "")
 
-      //alert
+      //alert ketika succes
       toast({
         title: "Product Added",
         status: "success",
@@ -58,22 +60,46 @@ const HomePage = () => {
     },
   })
 
+  // memunculkan alert untuk confirm delete
+  const confirmDelete = (id: any) => {
+    const deleteProduct = confirm("Are you sure ?")
+
+    if (deleteProduct) {
+      mutateDeleteProduct(id)
+
+      toast({
+        title: "Delete Success",
+        status: "error",
+      })
+    }
+  }
+
   const handleFormInput = (e: any) => {
     formik.setFieldValue(e.target.name, e.target.value)
   }
 
-  const RenderProducts = () =>
-    products?.data.map((item: any) => (
+  const renderProducts = () => {
+    return products?.data.map((item: any) => (
       <Tr key={item.id}>
         <Td>{item.name}</Td>
         <Td>{item.price}</Td>
         <Td>{item.description}</Td>
+        <Td>{<img src={item.image} alt={item.name} />}</Td>
         <Td>
-          <img src={item.image} alt={item.name} />
+          <Button
+            onClick={() => {
+              confirmDelete(item.id)
+            }}
+            colorScheme="red"
+          >
+            Delete
+          </Button>
+          {/* <img src={item.image} alt={item.name} /> */}
           {/* <Image src={item.image} alt={item.name} width={40} height={40} /> */}
         </Td>
       </Tr>
     ))
+  }
 
   return (
     <>
@@ -86,14 +112,26 @@ const HomePage = () => {
           <Table mb={20}>
             <Thead>
               <Tr>
-                <Th fontSize={22}>Name</Th>
-                <Th fontSize={22}>Price</Th>
-                <Th fontSize={22}>Description</Th>
-                <Th fontSize={22}>Image</Th>
+                <Th color={"white"} fontSize={22}>
+                  Name
+                </Th>
+                <Th color={"white"} fontSize={22}>
+                  Price
+                </Th>
+                <Th color={"white"} fontSize={22}>
+                  Description
+                </Th>
+                <Th color={"white"} fontSize={22}>
+                  Image
+                </Th>
+                <Th color={"white"} fontSize={22}>
+                  Action
+                </Th>
               </Tr>
             </Thead>
+
             <Tbody>
-              {RenderProducts()}
+              {renderProducts()}
               {productIsLoading && <Spinner width={50} height={50} />}
               {/* {!isLoading ? <Spinner/> : null} */}
             </Tbody>

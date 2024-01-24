@@ -5,7 +5,7 @@ export const useFetchProduct = () => {
   const {
     data: products,
     isLoading: productIsLoading,
-    refetch: refetchProducts,
+    refetch: refetchProducts, //supaya  fungsinya berjalan tanpa harus di refresh
   } = useQuery({
     queryFn: async () => {
       const productResponse = await API.get("/products")

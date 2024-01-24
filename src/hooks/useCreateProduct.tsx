@@ -5,20 +5,21 @@ import { useFetchProduct } from "./useFetchProduct"
 const useCreateProduct = () => {
   const { refetchProducts } = useFetchProduct()
 
-  const { mutate, isLoading: createProductIsLoading }: any = useMutation({
-    mutationFn: async (body) => {
-      const response = await API.post("/products", body)
-      console.log(response.data)
+  const { mutate: mutateCreateProduct, isLoading: createProductIsLoading }: any =
+    useMutation({
+      mutationFn: async (body) => {
+        const response = await API.post("/products", body)
+        console.log(response.data)
 
-      return response
-    },
-    onSuccess: () => {
-      refetchProducts()
-    },
-  })
+        return response
+      },
+      onSuccess: () => {
+        refetchProducts()
+      },
+    })
 
   return {
-    mutate,
+    mutateCreateProduct,
     createProductIsLoading,
   }
 }
