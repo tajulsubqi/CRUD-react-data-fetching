@@ -21,13 +21,15 @@ import {
 import useCreateProduct from "@/hooks/useCreateProduct"
 import { useFormik } from "formik"
 import useDeleteProduct from "@/hooks/useDeleteProduct"
+import useEditProduct from "@/hooks/useEditProduct"
 
 const HomePage = () => {
-  const { products, productIsLoading, refetchProducts } = useFetchProduct()
-  const { createProductIsLoading, mutateCreateProduct } = useCreateProduct()
-  const { mutateDeleteProduct } = useDeleteProduct()
-
   const toast = useToast()
+  const { products, productIsLoading, error } = useFetchProduct()
+
+  const { createProductIsLoading, mutateCreateProduct } = useCreateProduct()
+  const { mutateDeleteProduct, deleteProductLoading } = useDeleteProduct()
+  const { mutateEditProduct, editProductIsLoading } = useEditProduct()
 
   const formik = useFormik({
     initialValues: {
@@ -35,28 +37,49 @@ const HomePage = () => {
       price: "",
       description: "",
       image: "",
+      id: 0,
     },
     onSubmit: () => {
       //melakukan post product
-      const { name, price, description, image } = formik.values
-      mutateCreateProduct({
-        name,
-        price: parseInt(price),
-        description,
-        image,
-      })
+      const { name, price, description, image, id } = formik.values
+
+      if (id) {
+        //melakukan fetch products/{id}
+        mutateEditProduct({
+          name,
+          price: parseInt(price),
+          description,
+          image,
+          id,
+        })
+
+        //alert ketika succes
+        toast({
+          title: "Product Edited",
+          status: "success",
+        })
+      } else {
+        //melakukan POST /products
+        mutateCreateProduct({
+          name,
+          price: parseInt(price),
+          description,
+          image,
+        })
+
+        //alert ketika succes
+        toast({
+          title: "Product Added",
+          status: "success",
+        })
+      }
 
       // untuk mereset inputan
       formik.setFieldValue("name", "")
       formik.setFieldValue("price", "")
       formik.setFieldValue("description", "")
       formik.setFieldValue("image", "")
-
-      //alert ketika succes
-      toast({
-        title: "Product Added",
-        status: "success",
-      })
+      formik.setFieldValue("id", "")
     },
   })
 
@@ -78,6 +101,14 @@ const HomePage = () => {
     formik.setFieldValue(e.target.name, e.target.value)
   }
 
+  const onEditClick = (product: any) => {
+    formik.setFieldValue("id", product.id)
+    formik.setFieldValue("name", product.name)
+    formik.setFieldValue("price", product.price)
+    formik.setFieldValue("description", product.description)
+    formik.setFieldValue("image", product.image)
+  }
+
   const renderProducts = () => {
     return products?.data.map((item: any) => (
       <Tr key={item.id}>
@@ -86,16 +117,33 @@ const HomePage = () => {
         <Td>{item.description}</Td>
         <Td>{<img src={item.image} alt={item.name} />}</Td>
         <Td>
-          <Button
-            onClick={() => {
-              confirmDelete(item.id)
-            }}
-            colorScheme="red"
-          >
-            Delete
-          </Button>
-          {/* <img src={item.image} alt={item.name} /> */}
-          {/* <Image src={item.image} alt={item.name} width={40} height={40} /> */}
+          {editProductIsLoading ? (
+            <Spinner />
+          ) : (
+            <Button
+              onClick={() => {
+                onEditClick(item)
+              }}
+              colorScheme="cyan"
+            >
+              Edit
+            </Button>
+          )}
+        </Td>
+
+        <Td>
+          {deleteProductLoading ? (
+            <Spinner />
+          ) : (
+            <Button
+              onClick={() => {
+                confirmDelete(item.id)
+              }}
+              colorScheme="red"
+            >
+              Delete
+            </Button>
+          )}
         </Td>
       </Tr>
     ))
@@ -105,7 +153,6 @@ const HomePage = () => {
     <>
       <Box>
         <Text align={"center"} my={4}>
-          {" "}
           Home Page{" "}
         </Text>
         <Container>
@@ -124,7 +171,7 @@ const HomePage = () => {
                 <Th color={"white"} fontSize={22}>
                   Image
                 </Th>
-                <Th color={"white"} fontSize={22}>
+                <Th colSpan={2} color={"white"} fontSize={22}>
                   Action
                 </Th>
               </Tr>
@@ -146,6 +193,11 @@ const HomePage = () => {
                   value={formik.values.name}
                   onChange={handleFormInput}
                 />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Product ID</FormLabel>
+                <Input name="id" value={formik.values.id} onChange={handleFormInput} />
               </FormControl>
 
               <FormControl>
@@ -176,19 +228,10 @@ const HomePage = () => {
                 />
               </FormControl>
 
-              {createProductIsLoading ? (
+              {createProductIsLoading || editProductIsLoading ? (
                 <Spinner />
               ) : (
-                <Button
-                  type="submit"
-                  alignItems={"center"}
-                  _hover={{
-                    bgColor: "skyblue",
-                    color: "white",
-                    transitionDuration: "300ms",
-                  }}
-                  _active={{ bgColor: "blue", color: "white" }}
-                >
+                <Button type="submit" alignItems={"center"} colorScheme="whatsapp">
                   Submit Product
                 </Button>
               )}
